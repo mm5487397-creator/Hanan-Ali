@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ur-Latn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shatranj – Chess</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3efe6;--ink:#2a1f14;--sub:#7a6a58;--lt:#ecd9b0;--dk:#a9714b;--sel:#f2c94c;--mv:rgba(30,138,110,.85);--card:#fff;--chip:#e2d8c6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17120d;--ink:#f1e8d8;--sub:#a89a86;--lt:#caa97a;--dk:#7a4d30;--chip:#2c241b}}
+:root[data-theme="dark"]{--bg:#17120d;--ink:#f1e8d8;--sub:#a89a86;--lt:#caa97a;--dk:#7a4d30;--chip:#2c241b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Baloo 2",system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100dvh;display:flex;flex-direction:column;align-items:center;gap:10px;padding-bottom:16px}
+h1{margin:14px 0 0;font-size:30px;font-weight:800;letter-spacing:.06em}
+#st{font-weight:700;font-size:18px;min-height:30px;text-align:center;padding:0 12px}
+#bd{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);width:min(96vw,480px);aspect-ratio:1;border-radius:10px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.sq{position:relative;aspect-ratio:1/1;min-width:0;min-height:0;overflow:hidden;display:grid;place-items:center;font-size:clamp(28px,10.5vw,52px);line-height:1;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.sq.l{background:var(--lt)}.sq.d{background:var(--dk)}
+.sq.last{box-shadow:inset 0 0 0 100px rgba(242,201,76,.35)}
+.sq.sel{box-shadow:inset 0 0 0 100px var(--sel)}
+.sq.chk{box-shadow:inset 0 0 0 100px rgba(220,60,60,.6)}
+.sq.mv::after{content:"";position:absolute;width:30%;height:30%;border-radius:50%;background:var(--mv)}
+.sq.cap::after{width:88%;height:88%;background:none;border:4px solid var(--mv)}
+.w{color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 3px #000}
+.b{color:#161616;text-shadow:0 0 2px rgba(255,255,255,.6)}
+#cap{display:flex;justify-content:space-between;width:min(96vw,480px);font-size:20px;min-height:28px;color:var(--sub)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+button{font:inherit;color:var(--ink);cursor:pointer;background:var(--chip);border:0;border-radius:999px;padding:7px 16px;font-weight:700}
+button.on{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
+</style>
+</head>
+<body>
+<h1>SHATRANJ</h1>
+<div id="st"></div>
+<div id="cap"><span id="cb"></span><span id="cw"></span></div>
+<div id="bd"></div>
+<div class="bar"><button id="m1" class="on">Computer se</button><button id="m2">2 Players</button><button id="und">Wapas</button><button id="nw">Naya game</button></div>
+<script>
+const G={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"},V={p:1,n:3,b:3,r:5,q:9,k:0};
+const START="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+const $=s=>document.querySelector(s),bd=$("#bd");
+let B,turn,sel,moves,hist,last,vsCpu=true,over,busy;
+const isW=p=>p===p.toUpperCase();
+function parse(f){const a=[];for(const ch of f){if(ch==="/")continue;if(+ch)for(let i=0;i<+ch;i++)a.push("");else a.push(ch)}return a}
+function attacks(b,i){
+ const p=b[i],t=p.toLowerCase(),w=isW(p),r=i>>3,c=i&7,o=[];
+ const add=(r2,c2)=>{if(r2<0||r2>7||c2<0||c2>7)return false;const j=r2*8+c2;o.push(j);return !b[j]};
+ if(t==="p"){const d=w?-1:1;[-1,1].forEach(dc=>{if(c+dc>=0&&c+dc<8&&r+d>=0&&r+d<8)o.push((r+d)*8+c+dc)})}
+ else if(t==="n")[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]].forEach(([a,x])=>add(r+a,c+x));
+ else if(t==="k")for(let a=-1;a<=1;a++)for(let x=-1;x<=1;x++)if(a||x)add(r+a,c+x);
+ else{const dirs=[];if(t!=="b")dirs.push([1,0],[-1,0],[0,1],[0,-1]);if(t!=="r")dirs.push([1,1],[1,-1],[-1,1],[-1,-1]);
+  dirs.forEach(([a,x])=>{let k=1;while(add(r+a*k,c+x*k))k++})}
+ return o}
+function pseudo(b,i){
+ const p=b[i],w=isW(p),t=p.toLowerCase();
+ let o=attacks(b,i).filter(j=>t==="p"?(b[j]&&isW(b[j])!==w):(!b[j]||isW(b[j])!==w));
+ if(t==="p"){const d=w?-8:8,r=i>>3,f=i+d;if(f>=0&&f<64&&!b[f]){o.push(f);if((w&&r===6||!w&&r===1)&&!b[f+d])o.push(f+d)}}
+ return o}
+function after(b,f,t){const n=b.slice();let p=n[f];n[t]=p;n[f]="";if(p.toLowerCase()==="p"&&(t>>3===0||t>>3===7))n[t]=isW(p)?"Q":"q";return n}
+function inCheck(b,w){const k=b.indexOf(w?"K":"k");return b.some((p,i)=>p&&isW(p)!==w&&attacks(b,i).includes(k))}
+function legal(b,i){return pseudo(b,i).filter(t=>!inCheck(after(b,i,t),isW(b[i])))}
+function all(b,w){const o=[];b.forEach((p,i)=>{if(p&&isW(p)===w)legal(b,i).forEach(t=>o.push([i,t]))});return o}
+const mat=b=>b.reduce((s,p)=>p?s+(isW(p)?1:-1)*V[p.toLowerCase()]:s,0);
+function cpu(){
+ let best=null,bs=-1e9;const ms=all(B,false);
+ for(const [f,t] of ms){const b1=after(B,f,t);let worst=1e9;const rs=all(b1,true);
+  if(!rs.length)worst=inCheck(b1,true)?-1e6:0;
+  else for(const [f2,t2] of rs){const s=-mat(after(b1,f2,t2));if(s<worst)worst=s}
+  const s=worst+Math.random()*.4;if(s>bs){bs=s;best=[f,t]}}
+ return best}
+function draw(){
+ bd.innerHTML="";const kp=B.indexOf(turn?"K":"k"),chk=inCheck(B,turn);
+ for(let i=0;i<64;i++){const d=document.createElement("div"),p=B[i];
+  d.className="sq "+(((i>>3)+(i&7))%2?"d":"l");
+  if(last&&(i===last[0]||i===last[1]))d.classList.add("last");
+  if(i===sel)d.classList.add("sel");
+  if(chk&&i===kp)d.classList.add("chk");
+  if(moves.includes(i))d.classList.add(p?"cap":"mv");
+  if(p){d.textContent=G[p.toLowerCase()];d.classList.add(isW(p)?"w":"b")}
+  d.onclick=()=>tap(i);bd.appendChild(d)}
+ const lost=w=>"pnbrq".split("").map(t=>{const n=(t==="p"?8:t==="q"?1:2)-B.filter(p=>p===(w?t.toUpperCase():t)).length;return G[t].repeat(Math.max(0,n))}).join("");
+ $("#cb").textContent=lost(false);$("#cw").textContent=lost(true);
+ const n=all(B,turn).length;
+ if(!n){over=true;$("#st").textContent=chk?"Checkmate! "+(turn?"Kala":"Safed")+" jeet gaya 🎉":"Stalemate, barabar!"}
+ else $("#st").textContent=(turn?"Safed":"Kala")+" ki bari"+(chk?" – Check!":"")}
+function go(f,t){hist.push({B,turn,last});B=after(B,f,t);last=[f,t];turn=!turn;sel=null;moves=[];draw();
+ if(!over&&vsCpu&&!turn){busy=true;setTimeout(()=>{const m=cpu();busy=false;if(m)go(m[0],m[1])},450)}}
+function tap(i){
+ if(over||busy||(vsCpu&&!turn))return;
+ if(sel!=null&&moves.includes(i))return go(sel,i);
+ if(B[i]&&isW(B[i])===turn){sel=i;moves=legal(B,i)}else{sel=null;moves=[]}
+ draw()}
+function init(){B=parse(START);turn=true;sel=null;moves=[];hist=[];last=null;over=false;busy=false;draw()}
+function mode(c){vsCpu=c;$("#m1").classList.toggle("on",c);$("#m2").classList.toggle("on",!c);init()}
+$("#m1").onclick=()=>mode(true);$("#m2").onclick=()=>mode(false);$("#nw").onclick=init;
+$("#und").onclick=()=>{if(busy||!hist.length)return;let s=hist.pop();if(vsCpu&&!s.turn&&hist.length)s=hist.pop();B=s.B;turn=s.turn;last=s.last;sel=null;moves=[];over=false;draw()};
+init();
+</script>
+</body>
+</html>
