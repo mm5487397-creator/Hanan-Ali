@@ -50,7 +50,7 @@ function attacks(b,i){
  const add=(r2,c2)=>{if(r2<0||r2>7||c2<0||c2>7)return false;const j=r2*8+c2;o.push(j);return !b[j]};
  if(t==="p"){const d=w?-1:1;[-1,1].forEach(dc=>{if(c+dc>=0&&c+dc<8&&r+d>=0&&r+d<8)o.push((r+d)*8+c+dc)})}
  else if(t==="n")[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]].forEach(([a,x])=>add(r+a,c+x));
- else if(t==="k")for(let a=-1;a<=1;a++)for(let x=-1;x<=1;x++)if(a||x)add(r+a,c+x);
+ else if(t==="k"){for(let a=-1;a<=1;a++)for(let x=-1;x<=1;x++)if(a||x)add(r+a,c+x)}
  else{const dirs=[];if(t!=="b")dirs.push([1,0],[-1,0],[0,1],[0,-1]);if(t!=="r")dirs.push([1,1],[1,-1],[-1,1],[-1,-1]);
   dirs.forEach(([a,x])=>{let k=1;while(add(r+a*k,c+x*k))k++})}
  return o}
