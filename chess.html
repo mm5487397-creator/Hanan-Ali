@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Shatranj – Chess</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f3efe6;--ink:#2a1f14;--sub:#7a6a58;--lt:#ecd9b0;--dk:#a9714b;--sel:#f2c94c;--mv:rgba(30,138,110,.85);--card:#fff;--chip:#e2d8c6;
@@ -30,19 +31,22 @@ h1{margin:14px 0 0;font-size:30px;font-weight:800;letter-spacing:.06em}
 button{font:inherit;color:var(--ink);cursor:pointer;background:var(--chip);border:0;border-radius:999px;padding:7px 16px;font-weight:700}
 button.on{background:var(--ink);color:var(--bg)}
 button:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
+#ol{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:min(96vw,480px)}#ol[hidden]{display:none}#ol input{font:inherit;width:96px;text-align:center;text-transform:uppercase;padding:7px;border-radius:999px;border:2px solid var(--chip);background:var(--bg);color:var(--ink)}#ms{width:100%;text-align:center;font-weight:700;font-size:15px;min-height:22px}#nm{width:100%!important;text-transform:none!important}#rt{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:min(96vw,480px)}.pl{flex:1;min-width:150px;display:grid;grid-template-columns:auto 1fr;grid-template-areas:"av nm" "av lb" "el el";column-gap:12px;align-items:center;background:var(--chip);border:1px solid rgba(128,128,128,.25);border-radius:18px;padding:12px 14px;box-shadow:0 4px 14px rgba(0,0,0,.1)}.pl.me{border-color:var(--mv);box-shadow:0 0 0 2px var(--mv)}.av{grid-area:av;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--bg);font-weight:800;font-size:20px;text-transform:uppercase}.pn{grid-area:nm;font-weight:800;font-size:18px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pl small{grid-area:lb;font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.04em}.pe{grid-area:el;font-size:40px;font-weight:800;line-height:1;margin-top:6px;font-variant-numeric:tabular-nums}.pd{width:100%;text-align:center;font-weight:800;font-size:15px;color:#fff;background:var(--mv);border-radius:999px;padding:4px 12px}.pd.neg{background:var(--sub)}
 </style>
 </head>
 <body>
 <h1>SHATRANJ</h1>
+<div id="rt"></div>
 <div id="st"></div>
 <div id="cap"><span id="cb"></span><span id="cw"></span></div>
 <div id="bd"></div>
-<div class="bar"><button id="m1" class="on">Computer se</button><button id="m2">2 Players</button><button id="und">Wapas</button><button id="nw">Naya game</button></div>
+<div class="bar"><button id="m1" class="on">Computer se</button><button id="m2">2 Players</button><button id="und">Wapas</button><button id="m3">Online</button><button id="rs" hidden>Haar maano</button><button id="nw">Naya game</button></div>
+<div id="ol" hidden><input id="nm" placeholder="Apna naam likho" maxlength="12" aria-label="Apna naam"><button id="mk">Room banao</button><input id="cd" placeholder="Code" maxlength="5" aria-label="Room code"><button id="jn">Join karo</button><div id="ms"></div></div>
 <script>
 const G={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"},V={p:1,n:3,b:3,r:5,q:9,k:0};
 const START="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 const $=s=>document.querySelector(s),bd=$("#bd");
-let B,turn,sel,moves,hist,last,vsCpu=true,over,busy;
+let B,turn,sel,moves,hist,last,vsCpu=true,over,busy,online=false,conn=null,peer=null,mine=true,scored=false,opp=100,rating=100,myN="",oppN="",RT={K:1,Q:1,k:1,q:1};
 const isW=p=>p===p.toUpperCase();
 function parse(f){const a=[];for(const ch of f){if(ch==="/")continue;if(+ch)for(let i=0;i<+ch;i++)a.push("");else a.push(ch)}return a}
 function attacks(b,i){
@@ -59,9 +63,15 @@ function pseudo(b,i){
  let o=attacks(b,i).filter(j=>t==="p"?(b[j]&&isW(b[j])!==w):(!b[j]||isW(b[j])!==w));
  if(t==="p"){const d=w?-8:8,r=i>>3,f=i+d;if(f>=0&&f<64&&!b[f]){o.push(f);if((w&&r===6||!w&&r===1)&&!b[f+d])o.push(f+d)}}
  return o}
-function after(b,f,t){const n=b.slice();let p=n[f];n[t]=p;n[f]="";if(p.toLowerCase()==="p"&&(t>>3===0||t>>3===7))n[t]=isW(p)?"Q":"q";return n}
+function after(b,f,t){const n=b.slice();let p=n[f];n[t]=p;n[f]="";if(p.toLowerCase()==="p"&&(t>>3===0||t>>3===7))n[t]=isW(p)?"Q":"q";if(p.toLowerCase()==="k"&&Math.abs(t-f)===2){const rf=t>f?f+3:f-4,rt=t>f?f+1:f-1;n[rt]=n[rf];n[rf]=""}return n}
 function inCheck(b,w){const k=b.indexOf(w?"K":"k");return b.some((p,i)=>p&&isW(p)!==w&&attacks(b,i).includes(k))}
-function legal(b,i){return pseudo(b,i).filter(t=>!inCheck(after(b,i,t),isW(b[i])))}
+function legal(b,i){
+ const p=b[i],w=isW(p),m=pseudo(b,i).filter(t=>!inCheck(after(b,i,t),w));
+ if(p.toLowerCase()==="k"){const h=w?60:4,rk=w?"R":"r";
+  if(i===h&&!inCheck(b,w)){
+   if((w?RT.K:RT.k)&&b[h+3]===rk&&!b[h+1]&&!b[h+2]&&!inCheck(after(b,h,h+1),w)&&!inCheck(after(b,h,h+2),w))m.push(h+2);
+   if((w?RT.Q:RT.q)&&b[h-4]===rk&&!b[h-1]&&!b[h-2]&&!b[h-3]&&!inCheck(after(b,h,h-1),w)&&!inCheck(after(b,h,h-2),w))m.push(h-2)}}
+ return m}
 function all(b,w){const o=[];b.forEach((p,i)=>{if(p&&isW(p)===w)legal(b,i).forEach(t=>o.push([i,t]))});return o}
 const mat=b=>b.reduce((s,p)=>p?s+(isW(p)?1:-1)*V[p.toLowerCase()]:s,0);
 function cpu(){
@@ -73,7 +83,7 @@ function cpu(){
  return best}
 function draw(){
  bd.innerHTML="";const kp=B.indexOf(turn?"K":"k"),chk=inCheck(B,turn);
- for(let i=0;i<64;i++){const d=document.createElement("div"),p=B[i];
+ for(let k=0;k<64;k++){const i=online&&!mine?63-k:k,d=document.createElement("div"),p=B[i];
   d.className="sq "+(((i>>3)+(i&7))%2?"d":"l");
   if(last&&(i===last[0]||i===last[1]))d.classList.add("last");
   if(i===sel)d.classList.add("sel");
@@ -84,19 +94,35 @@ function draw(){
  const lost=w=>"pnbrq".split("").map(t=>{const n=(t==="p"?8:t==="q"?1:2)-B.filter(p=>p===(w?t.toUpperCase():t)).length;return G[t].repeat(Math.max(0,n))}).join("");
  $("#cb").textContent=lost(false);$("#cw").textContent=lost(true);
  const n=all(B,turn).length;
- if(!n){over=true;$("#st").textContent=chk?"Checkmate! "+(turn?"Kala":"Safed")+" jeet gaya 🎉":"Stalemate, barabar!"}
- else $("#st").textContent=(turn?"Safed":"Kala")+" ki bari"+(chk?" – Check!":"")}
-function go(f,t){hist.push({B,turn,last});B=after(B,f,t);last=[f,t];turn=!turn;sel=null;moves=[];draw();
+ if(!n){over=true;$("#st").textContent=chk?"Checkmate! "+(turn?"Kala":"Safed")+" jeet gaya 🎉":"Stalemate, barabar!";if(online&&!scored){scored=true;rate(chk?(turn===mine?0:1):.5)}}
+ else $("#st").textContent=(turn?"Safed":"Kala")+" ki bari"+(chk?" – Check!":"");if(online)$("#st").textContent+=" · "+(myN||"Guest")+": "+(mine?"Safed":"Kala")}
+function go(f,t){hist.push({B,turn,last,RT:{...RT}});
+ const p0=B[f];if(p0==="K")RT.K=RT.Q=0;else if(p0==="k")RT.k=RT.q=0;
+ [[63,"K"],[56,"Q"],[7,"k"],[0,"q"]].forEach(([s,k])=>{if(f===s||t===s)RT[k]=0});
+ B=after(B,f,t);last=[f,t];turn=!turn;sel=null;moves=[];draw();
  if(!over&&vsCpu&&!turn){busy=true;setTimeout(()=>{const m=cpu();busy=false;if(m)go(m[0],m[1])},450)}}
 function tap(i){
- if(over||busy||(vsCpu&&!turn))return;
- if(sel!=null&&moves.includes(i))return go(sel,i);
+ if(over||busy||(vsCpu&&!turn)||(online&&turn!==mine))return;
+ if(sel!=null&&moves.includes(i)){const f=sel;if(online&&conn)conn.send({f,t:i});return go(f,i)}
  if(B[i]&&isW(B[i])===turn){sel=i;moves=legal(B,i)}else{sel=null;moves=[]}
  draw()}
-function init(){B=parse(START);turn=true;sel=null;moves=[];hist=[];last=null;over=false;busy=false;draw()}
-function mode(c){vsCpu=c;$("#m1").classList.toggle("on",c);$("#m2").classList.toggle("on",!c);init()}
-$("#m1").onclick=()=>mode(true);$("#m2").onclick=()=>mode(false);$("#nw").onclick=init;
-$("#und").onclick=()=>{if(busy||!hist.length)return;let s=hist.pop();if(vsCpu&&!s.turn&&hist.length)s=hist.pop();B=s.B;turn=s.turn;last=s.last;sel=null;moves=[];over=false;draw()};
+function init(){B=parse(START);RT={K:1,Q:1,k:1,q:1};scored=false;$("#rs").hidden=!online;showRt();turn=true;sel=null;moves=[];hist=[];last=null;over=false;busy=false;draw()}
+function mode(c){online=false;if(conn){conn.close();conn=null}$("#m3").classList.remove("on");vsCpu=c;$("#m1").classList.toggle("on",c);$("#m2").classList.toggle("on",!c);init()}
+$("#m1").onclick=()=>mode(true);$("#m2").onclick=()=>mode(false);$("#nw").onclick=()=>{if(online&&conn)conn.send({reset:1});init()};
+$("#und").onclick=()=>{if(online||busy||!hist.length)return;let s=hist.pop();if(vsCpu&&!s.turn&&hist.length)s=hist.pop();B=s.B;turn=s.turn;last=s.last;RT=s.RT;sel=null;moves=[];over=false;draw()};
+function showRt(x){const r=$("#rt");r.innerHTML="";const card=(n,e,me)=>{const d=document.createElement("div");d.className="pl"+(me?" me":"");const v=document.createElement("div");v.className="av";v.textContent=n[0]||"?";const a=document.createElement("span");a.className="pn";a.textContent=n;const l=document.createElement("small");l.textContent=n+"’s ELO";const b=document.createElement("span");b.className="pe";b.textContent=e;d.append(v,a,l,b);return d};r.appendChild(card(myN||"Guest",rating,true));if(online)r.appendChild(card(oppN||"Dost",opp,false));if(x){const t=document.createElement("div");t.className="pd"+(x[0]==="+"?"":" neg");t.textContent=x;r.appendChild(t)}}
+function rate(S){const r0=rating,E=1/(1+Math.pow(10,(opp-r0)/400));rating=Math.max(100,Math.round(r0+32*(S-E)));try{localStorage.setItem("shatranj-r-"+myN,rating)}catch(e){}showRt((rating>r0?"+":"")+(rating-r0)+" ELO  ("+r0+" → "+rating+")"+(S===0&&r0===100?" · 100 se neeche nahi jati":""))}
+function setName(){myN=$("#nm").value.trim().slice(0,12);if(!myN)return "";try{localStorage.setItem("shatranj-name",myN);rating=Math.max(100,parseInt(localStorage.getItem("shatranj-r-"+myN))||100)}catch(e){}showRt();return myN}
+$("#nm").onchange=setName;
+try{myN=localStorage.getItem("shatranj-name")||"";$("#nm").value=myN;rating=Math.max(100,parseInt(localStorage.getItem("shatranj-r-"+myN))||100)}catch(e){}
+$("#rs").onclick=()=>{if(!online||over||!conn||!confirm("Pakka haar maanni hai?"))return;conn.send({resign:1});over=true;scored=true;$("#st").textContent="Aap ne haar maan li";rate(0)};
+const ML="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",ms=t=>$("#ms").textContent=t;
+function link(c,host){conn=c;c.on("open",()=>{online=true;vsCpu=false;mine=host;opp=100;oppN="";c.send({hello:rating,name:myN});["m1","m2"].forEach(x=>$("#"+x).classList.remove("on"));$("#m3").classList.add("on");init();ms("Connect ho gaya! "+(host?"Aap Safed hain, pehli chaal aap ki.":"Aap Kala hain, dost ki chaal ka intezar."))});
+ c.on("data",d=>{if(d.hello){opp=+d.hello||100;oppN=String(d.name||"").slice(0,12);return showRt()}if(d.resign&&!over){over=true;scored=true;$("#st").textContent="Dost ne haar maan li, aap jeet gaye! 🎉";rate(1);return}if(d.reset)return init();if(over||turn===mine)return;if(B[d.f]&&isW(B[d.f])===turn&&legal(B,d.f).includes(d.t))go(d.f,d.t)});
+ c.on("close",()=>{ms("Dost disconnect ho gaya");online=false})}
+$("#m3").onclick=()=>{$("#ol").hidden=!$("#ol").hidden};
+$("#mk").onclick=()=>{if(!setName())return ms("Pehle apna naam likho");if(peer)peer.destroy();const code=Array.from({length:5},()=>ML[Math.floor(Math.random()*32)]).join("");peer=new Peer("lafzchess-"+code);peer.on("open",()=>ms("Room code: "+code+" (dost ko bhejo)"));peer.on("connection",c=>link(c,true));peer.on("error",e=>ms("Masla: "+e.type))};
+$("#jn").onclick=()=>{if(!setName())return ms("Pehle apna naam likho");const code=$("#cd").value.trim().toUpperCase();if(code.length<5)return ms("5 harf ka code likho");if(peer)peer.destroy();peer=new Peer();peer.on("open",()=>{link(peer.connect("lafzchess-"+code,{reliable:true}),false);ms("Connect ho raha hai...")});peer.on("error",e=>ms("Masla: "+e.type+" (code check karo)"))};
 init();
 </script>
 </body>
