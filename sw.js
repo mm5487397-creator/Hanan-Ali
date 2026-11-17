@@ -1,4 +1,4 @@
-const CACHE = 'lafz-games-v1';
+const CACHE = 'lafz-games-v2';
 const FILES = [
   './',
   'index.html',
