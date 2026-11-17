@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="ur-Latn">
-<head><link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0f172a">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
-<script src="install.js" defer></script>
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Shatranj – Chess</title>
@@ -35,7 +31,7 @@ h1{margin:14px 0 0;font-size:30px;font-weight:800;letter-spacing:.06em}
 button{font:inherit;color:var(--ink);cursor:pointer;background:var(--chip);border:0;border-radius:999px;padding:7px 16px;font-weight:700}
 button.on{background:var(--ink);color:var(--bg)}
 button:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
-#ol{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:min(96vw,480px)}#ol[hidden]{display:none}#ol input{font:inherit;width:96px;text-align:center;text-transform:uppercase;padding:7px;border-radius:999px;border:2px solid var(--chip);background:var(--bg);color:var(--ink)}#ms{width:100%;text-align:center;font-weight:700;font-size:15px;min-height:22px}#nm{width:100%!important;text-transform:none!important}#rt{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:min(96vw,480px)}.pl{flex:1;min-width:150px;display:grid;grid-template-columns:auto 1fr;grid-template-areas:"av nm" "av lb" "el el";column-gap:12px;align-items:center;background:var(--chip);border:1px solid rgba(128,128,128,.25);border-radius:18px;padding:12px 14px;box-shadow:0 4px 14px rgba(0,0,0,.1)}.pl.me{border-color:var(--mv);box-shadow:0 0 0 2px var(--mv)}.av{grid-area:av;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--bg);font-weight:800;font-size:20px;text-transform:uppercase}.pn{grid-area:nm;font-weight:800;font-size:18px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pl small{grid-area:lb;font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.04em}.pe{grid-area:el;font-size:40px;font-weight:800;line-height:1;margin-top:6px;font-variant-numeric:tabular-nums}.pd{width:100%;text-align:center;font-weight:800;font-size:15px;color:#fff;background:var(--mv);border-radius:999px;padding:4px 12px}.pd.neg{background:var(--sub)}
+#ol{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:min(96vw,480px)}#ol[hidden]{display:none}#ol input{font:inherit;width:96px;text-align:center;text-transform:uppercase;padding:7px;border-radius:999px;border:2px solid var(--chip);background:var(--bg);color:var(--ink)}#ms{width:100%;text-align:center;font-weight:700;font-size:15px;min-height:22px}#nm{width:100%!important;text-transform:none!important}#cm{width:min(96vw,480px);background:var(--chip);border-radius:16px;padding:10px 14px;line-height:1.35;border-left:4px solid #d6b15c}#cm b{display:block;font-size:12px;letter-spacing:.08em;color:var(--sub);margin-bottom:4px}#cm p{margin:3px 0;font-size:13px;color:var(--sub)}#cm p:first-of-type{color:var(--ink);font-weight:800;font-size:16px}#rt{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:min(96vw,480px)}.pl{flex:1;min-width:150px;display:grid;grid-template-columns:auto 1fr;grid-template-areas:"av nm" "av lb" "el el";column-gap:12px;align-items:center;background:var(--chip);border:1px solid rgba(128,128,128,.25);border-radius:18px;padding:12px 14px;box-shadow:0 4px 14px rgba(0,0,0,.1)}.pl.me{border-color:var(--mv);box-shadow:0 0 0 2px var(--mv)}.av{grid-area:av;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--bg);font-weight:800;font-size:20px;text-transform:uppercase}.pn{grid-area:nm;font-weight:800;font-size:18px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pl small{grid-area:lb;font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.04em}.pe{grid-area:el;font-size:40px;font-weight:800;line-height:1;margin-top:6px;font-variant-numeric:tabular-nums}.pd{width:100%;text-align:center;font-weight:800;font-size:15px;color:#fff;background:var(--mv);border-radius:999px;padding:4px 12px}.pd.neg{background:var(--sub)}
 </style>
 </head>
 <body>
@@ -44,6 +40,7 @@ button:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
 <div id="st"></div>
 <div id="cap"><span id="cb"></span><span id="cw"></span></div>
 <div id="bd"></div>
+<div id="cm"></div>
 <div class="bar"><button id="m1" class="md on">Computer se</button><button id="und" class="ac">Wapas</button><button id="m3" class="md">Online</button><button id="nw" class="ac">Naya game</button><button id="rs" class="ac" hidden>Haar maano</button><button id="m2">2 Players</button></div>
 <div id="ol" hidden><input id="nm" placeholder="Apna naam likho" maxlength="12" aria-label="Apna naam"><button id="mk">Room banao</button><input id="cd" placeholder="Code" maxlength="5" aria-label="Room code"><button id="jn">Join karo</button><div id="ms"></div></div>
 <script>
@@ -78,12 +75,18 @@ function legal(b,i){
  return m}
 function all(b,w){const o=[];b.forEach((p,i)=>{if(p&&isW(p)===w)legal(b,i).forEach(t=>o.push([i,t]))});return o}
 const mat=b=>b.reduce((s,p)=>p?s+(isW(p)?1:-1)*V[p.toLowerCase()]:s,0);
+function evalB(b){let s=0;b.forEach((p,i)=>{if(!p)return;const t=p.toLowerCase(),r=i>>3,c=i&7;let v=V[t]*100;if(t==="p"||t==="n"||t==="b")v+=(7-Math.abs(c-3.5)-Math.abs(r-3.5))*4;s+=isW(p)?v:-v});return s}
+function search(b,d,a,be,w){
+ if(d===0)return evalB(b);
+ const ms=all(b,w);if(!ms.length)return inCheck(b,w)?(w?-1e5-d:1e5+d):0;
+ const cv=m=>b[m[1]]?V[b[m[1]].toLowerCase()]:0;ms.sort((x,y)=>cv(y)-cv(x));
+ if(w){let best=-1e9;for(const [f,t] of ms){const s=search(after(b,f,t),d-1,a,be,false);if(s>best)best=s;if(best>a)a=best;if(a>=be)break}return best}
+ let best=1e9;for(const [f,t] of ms){const s=search(after(b,f,t),d-1,a,be,true);if(s<best)best=s;if(best<be)be=best;if(a>=be)break}return best}
 function cpu(){
- let best=null,bs=-1e9;const ms=all(B,false);
- for(const [f,t] of ms){const b1=after(B,f,t);let worst=1e9;const rs=all(b1,true);
-  if(!rs.length)worst=inCheck(b1,true)?-1e6:0;
-  else for(const [f2,t2] of rs){const s=-mat(after(b1,f2,t2));if(s<worst)worst=s}
-  const s=worst+Math.random()*.4;if(s>bs){bs=s;best=[f,t]}}
+ const c={d:1,r:0,ns:30},ms=all(B,false);if(!ms.length)return null;
+ if(Math.random()<c.r)return ms[Math.floor(Math.random()*ms.length)];
+ let best=null,bs=1e9;const dp=c.d;
+ for(const [f,t] of ms){const s=search(after(B,f,t),dp,-1e9,1e9,true)+Math.random()*c.ns;if(s<bs){bs=s;best=[f,t]}}
  return best}
 function draw(){
  bd.innerHTML="";const kp=B.indexOf(turn?"K":"k"),chk=inCheck(B,turn);
@@ -103,23 +106,35 @@ function draw(){
 function go(f,t){hist.push({B,turn,last,RT:{...RT}});
  const p0=B[f];if(p0==="K")RT.K=RT.Q=0;else if(p0==="k")RT.k=RT.q=0;
  [[63,"K"],[56,"Q"],[7,"k"],[0,"q"]].forEach(([s,k])=>{if(f===s||t===s)RT[k]=0});
- B=after(B,f,t);last=[f,t];turn=!turn;sel=null;moves=[];draw();
+ const cp=B[t],pm=p0.toLowerCase()==="p"&&(t>>3===0||t>>3===7),ct=p0.toLowerCase()==="k"&&Math.abs(t-f)===2;B=after(B,f,t);last=[f,t];turn=!turn;sel=null;moves=[];draw();cmGo(p0,cp,f,t,pm,ct);
  if(!over&&vsCpu&&!turn){busy=true;setTimeout(()=>{const m=cpu();busy=false;if(m)go(m[0],m[1])},450)}}
 function tap(i){
  if(over||busy||(vsCpu&&!turn)||(online&&turn!==mine))return;
  if(sel!=null&&moves.includes(i)){const f=sel;if(online&&conn)conn.send({f,t:i});return go(f,i)}
  if(B[i]&&isW(B[i])===turn){sel=i;moves=legal(B,i)}else{sel=null;moves=[]}
  draw()}
-function init(){B=parse(START);RT={K:1,Q:1,k:1,q:1};scored=false;$("#rs").hidden=!online;showRt();turn=true;sel=null;moves=[];hist=[];last=null;over=false;busy=false;draw()}
+function init(){B=parse(START);RT={K:1,Q:1,k:1,q:1};scored=false;cmL=[];cm("Khel shuru! Dono taraf se fauj tayyar hai. 🎙️");$("#rs").hidden=!online;showRt();turn=true;sel=null;moves=[];hist=[];last=null;over=false;busy=false;draw()}
 function mode(c){online=false;if(conn){conn.close();conn=null}$("#m3").classList.remove("on");vsCpu=c;$("#m1").classList.toggle("on",c);$("#m2").classList.toggle("on",!c);init()}
 $("#m1").onclick=()=>mode(true);$("#m2").onclick=()=>mode(false);$("#nw").onclick=()=>{if(online&&conn)conn.send({reset:1});init()};
 $("#und").onclick=()=>{if(online||busy||!hist.length)return;let s=hist.pop();if(vsCpu&&!s.turn&&hist.length)s=hist.pop();B=s.B;turn=s.turn;last=s.last;RT=s.RT;sel=null;moves=[];over=false;draw()};
-function showRt(x){const r=$("#rt");r.innerHTML="";const card=(n,e,me)=>{const d=document.createElement("div");d.className="pl"+(me?" me":"");const v=document.createElement("div");v.className="av";v.textContent=n[0]||"?";const a=document.createElement("span");a.className="pn";a.textContent=n;const l=document.createElement("small");l.textContent=n+"’s ELO";const b=document.createElement("span");b.className="pe";b.textContent=e;d.append(v,a,l,b);return d};r.appendChild(card(myN||"Guest",rating,true));if(online)r.appendChild(card(oppN||"Dost",opp,false));if(x){const t=document.createElement("div");t.className="pd"+(x[0]==="+"?"":" neg");t.textContent=x;r.appendChild(t)}}
+function showRt(x){const r=$("#rt");r.innerHTML="";const card=(n,e,me)=>{const d=document.createElement("div");d.className="pl"+(me?" me":"");const v=document.createElement("div");v.className="av";v.textContent=n[0]||"?";const a=document.createElement("span");a.className="pn";a.textContent=n;const l=document.createElement("small");l.textContent=n+"’s ELO · "+rank(e);const b=document.createElement("span");b.className="pe";b.textContent=e;d.append(v,a,l,b);return d};r.appendChild(card(myN||"Guest",rating,true));if(online)r.appendChild(card(oppN||"Dost",opp,false));if(x){const t=document.createElement("div");t.className="pd"+(x[0]==="+"?"":" neg");t.textContent=x;r.appendChild(t)}}
 function rate(S){const r0=rating,E=1/(1+Math.pow(10,(opp-r0)/400));rating=Math.max(100,Math.round(r0+32*(S-E)));try{localStorage.setItem("shatranj-r-"+myN,rating)}catch(e){}showRt((rating>r0?"+":"")+(rating-r0)+" ELO  ("+r0+" → "+rating+")"+(S===0&&r0===100?" · 100 se neeche nahi jati":""))}
 function setName(){myN=$("#nm").value.trim().slice(0,12);if(!myN)return "";try{localStorage.setItem("shatranj-name",myN);rating=Math.max(100,parseInt(localStorage.getItem("shatranj-r-"+myN))||100)}catch(e){}showRt();return myN}
 $("#nm").onchange=setName;
 try{myN=localStorage.getItem("shatranj-name")||"";$("#nm").value=myN;rating=Math.max(100,parseInt(localStorage.getItem("shatranj-r-"+myN))||100)}catch(e){}
 $("#rs").onclick=()=>{if(!online||over||!conn||!confirm("Pakka haar maanni hai?"))return;conn.send({resign:1});over=true;scored=true;$("#st").textContent="Aap ne haar maan li";rate(0)};
+const PN={p:"Pyada",n:"Ghoda",b:"Oonth",r:"Rukh",q:"Wazir",k:"Badshah"},sqn=i=>"abcdefgh"[i&7]+(8-(i>>3)),pick=a=>a[Math.floor(Math.random()*a.length)];
+let cmL=[];
+function rank(e){return e>=350?"Badshah":e>=260?"Wazir":e>=200?"Rukh":e>=150?"Oonth":e>=120?"Ghoda":"Pyada"}
+function cm(t){cmL.unshift(t);cmL=cmL.slice(0,3);const d=$("#cm");d.innerHTML="";const h=document.createElement("b");h.textContent="🎙️ LIVE COMMENTARY";d.appendChild(h);cmL.forEach(x=>{const p=document.createElement("p");p.textContent=x;d.appendChild(p)})}
+function comment(p,cp,f,t,pm,ct){
+ const A=PN[p.toLowerCase()],S=isW(p)?"Safed":"Kala",s=sqn(t);
+ if(ct)return pick([S+" ne Badshah ko qile mein bitha diya! Castling, kya hikmat-e-amli hai!","Badshah ne panah li, Rukh ne pehra sambhala. Castling!"]);
+ if(pm)return "Kamaal! "+S+" ka Pyada "+s+" par Wazir ban gaya! Stadium jhoom utha! 🎉";
+ if(cp){const C=PN[cp.toLowerCase()];if(C==="Wazir")return "Wazir gaya! "+S+" ne "+s+" par Wazir ko gira diya! Maidan mein sannata! 😱";return pick(["Wah wah! "+S+" ka "+A+" "+s+" par "+C+" ko le gaya!","Kya shandar shot! "+A+" ne "+C+" ko "+s+" par udaa diya!","Seedha six! "+S+" ne "+s+" par "+C+" ka kaam tamam kiya!","Dabocha! "+C+" "+s+" par gira, "+A+" ne maidan mara!"])}
+ const Q={p:[S+" ka Pyada "+s+" tak aage badha.","Pyada ne qadam badhaya: "+s+"!"],n:["Ghoda "+s+" par kood gaya, kya dhai ghar ki chaal!"],b:["Oonth tirchi dour kar "+s+" par pahuncha."],r:["Rukh ne seedhi lakeer kheenchi, "+s+" par!"],q:["Wazir "+s+" par, ab khatra hi khatra!"],k:["Badshah ne ehtiyat se "+s+" ka rukh kiya."]};
+ return pick(Q[p.toLowerCase()])}
+function cmGo(p,cp,f,t,pm,ct){let l=comment(p,cp,f,t,pm,ct);const nm=all(B,turn).length,ck=inCheck(B,turn);if(!nm)l=ck?"CHECKMATE! "+(isW(p)?"Safed":"Kala")+" jeet gaya, stadium khada ho gaya! 🏆":"Stalemate! Muqabla barabar chhoot gaya.";else if(ck)l="Check! "+l;if(hist.length===1)l="Match shuru! "+l;cm(l)}
 const ML="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",ms=t=>$("#ms").textContent=t;
 function link(c,host){conn=c;c.on("open",()=>{online=true;vsCpu=false;mine=host;opp=100;oppN="";c.send({hello:rating,name:myN});["m1","m2"].forEach(x=>$("#"+x).classList.remove("on"));$("#m3").classList.add("on");init();ms("Connect ho gaya! "+(host?"Aap Safed hain, pehli chaal aap ki.":"Aap Kala hain, dost ki chaal ka intezar."))});
  c.on("data",d=>{if(d.hello){opp=+d.hello||100;oppN=String(d.name||"").slice(0,12);return showRt()}if(d.resign&&!over){over=true;scored=true;$("#st").textContent="Dost ne haar maan li, aap jeet gaye! 🎉";rate(1);return}if(d.reset)return init();if(over||turn===mine)return;if(B[d.f]&&isW(B[d.f])===turn&&legal(B,d.f).includes(d.t))go(d.f,d.t)});
