@@ -1,4 +1,4 @@
-const CACHE = 'lafz-games-v2';
+const CACHE = 'vantix-v3';
 const FILES = [
   './',
   'index.html',
